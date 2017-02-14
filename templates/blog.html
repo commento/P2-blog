@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>RICCARDO blog</title>
+</head>
+<body>
+	<h1>RICCARDO's blog</h1>
+
+	<hr>
+
+	{% for post in posts:%}
+	<div>
+		<div>
+			{{post.key().id()}}
+		</div>
+		<div>
+			{{post.subject}}
+		</div>
+		<pre>
+			{{post.content}}
+		</pre>
+	</div>
+	{% endfor %}
+</body>
+</html>
