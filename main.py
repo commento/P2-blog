@@ -149,7 +149,6 @@ class Post(db.Model):
 class BlogHandler(Handler):
 
     def render_front(self):
-
         posts = db.GqlQuery("SELECT * FROM Post ORDER BY created DESC LIMIT 10")
         self.render("blog.html", posts=posts)
 
@@ -182,13 +181,10 @@ class NewPostHandler(Handler):
 
 class PostHandler(Handler):
 
-    def render_front(self, subject="", content="", error=""):
-        print('hello3')
-        self.render("newpost.html", subject=subject, content=content, error=error)
-
     def get(self, id):
         key = db.Key.from_path("Post", int(id))
         post = db.get(key)
+        post.content = post.content
         self.render("post.html", subject=post.subject, content=post.content, id=id)
 
 
