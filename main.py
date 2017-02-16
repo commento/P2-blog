@@ -71,11 +71,17 @@ class User(db.Model):
     password = db.StringProperty(required=True)
     email = db.StringProperty()
 
-def check_u_and_p(username, password):
+def checkUserPass(username, password):
     users = db.GqlQuery("SELECT * FROM User")
     for user in users:
         if user.username == username and user.password == password:
             return True
+
+def checkUsername(username):
+    users = db.GqlQuery("SELECT * FROM User")
+    for user in users:
+        if user.username == username:
+            return False
 
 def valid_password(password, verpass):
     if password and PASS_RE.match(password) and password == verpass:
@@ -118,6 +124,8 @@ class MainPage(Handler):
                 self.render("index.html", nvp="Not valid password")
             elif not bool_email:
                 self.render("index.html", nve="Not valid email", mail=email)
+        elif checkUsername(username) == False:
+            self.render("index.html", nvu="Already used username", name=username)
         else:
             u = User(username=username, password=password, email=email)
             u.put()
@@ -135,7 +143,7 @@ class LoginPage(Handler):
         username = self.request.get('username')
         password = self.request.get('password')
 
-        checkup = check_u_and_p(username, password)
+        checkup = checkUserPass(username, password)
 
         if not checkup:
             self.render("login.html", nvu="Not valid username or Not valid password", name=username)
