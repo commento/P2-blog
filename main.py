@@ -17,6 +17,7 @@ import os
 import jinja2
 import webapp2
 import string
+import hashlib
 
 import re
 
@@ -29,6 +30,16 @@ USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 PASS_RE = re.compile(r"^.{3,20}$")
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
 
+def hash_str(s):
+    return hashlib.sha256(s).hexdigest()
+
+def make_secure_val(s):
+    return s + '|' + hash_str(s)
+
+def check_secure_val(h):
+    v = h.partition('|')
+    if hash_str(v[0]) == v[2]:
+        return v[0]
 
 def apply_rot13(text):
     test = ""
@@ -55,6 +66,16 @@ def valid_email(email):
     else:
         return False
 
+class User(db.Model):
+    username = db.StringProperty(required=True)
+    password = db.StringProperty(required=True)
+    email = db.StringProperty()
+
+def check_u_and_p(username, password):
+    users = db.GqlQuery("SELECT * FROM User")
+    for user in users:
+        if user.username == username and user.password == password:
+            return True
 
 def valid_password(password, verpass):
     if password and PASS_RE.match(password) and password == verpass:
@@ -75,12 +96,10 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
-
 class MainPage(Handler):
 
     def get(self):
-        items = self.request.get_all("food")
-        self.render("index.html", items=items)
+        self.render("index.html")
 
     def post(self):
         username = self.request.get('username')
@@ -100,13 +119,48 @@ class MainPage(Handler):
             elif not bool_email:
                 self.render("index.html", nve="Not valid email", mail=email)
         else:
-            self.redirect("/welcome?username=%s" % username)
+            u = User(username=username, password=password, email=email)
+            u.put()
+            cookie_username = make_secure_val(username)
+            self.response.headers.add_header('Set-Cookie', 'username=%s; Path=/' % str(cookie_username))
+            self.redirect("/welcome")
 
+
+class LoginPage(Handler):
+
+    def get(self):
+        self.render("login.html")
+
+    def post(self):
+        username = self.request.get('username')
+        password = self.request.get('password')
+
+        checkup = check_u_and_p(username, password)
+
+        if not checkup:
+            self.render("login.html", nvu="Not valid username or Not valid password", name=username)
+        else:
+            cookie_username = make_secure_val(username)
+            self.response.headers.add_header('Set-Cookie', 'username=%s; Path=/' % str(cookie_username))
+            self.redirect("/welcome")
+
+
+class LogoutPage(Handler):
+
+    def get(self):
+        self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
+        self.redirect("/signup")  
+  
 
 class ThanksHandler(Handler):
 
     def get(self):
-        username = self.request.get("username")
+        username = self.request.cookies.get("username")
+        if check_secure_val(username):
+            username = username.split('|')[0]
+        else:
+           self.redirect("/signup") 
+
         self.render("thanks.html", username=username)
 
 
@@ -189,7 +243,9 @@ class PostHandler(Handler):
 
 
 app = webapp2.WSGIApplication([
-    ('/', MainPage),
+    ('/signup', MainPage),
+    ('/login', LoginPage),
+    ('/logout', LogoutPage),
     ('/welcome', ThanksHandler),
     ('/front', FrontHandler),
     ('/blog', BlogHandler),
