@@ -175,8 +175,13 @@ class LoginPage(Handler):
 class LogoutPage(Handler):
 
     def get(self):
-        self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
-        self.redirect("/signup")
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            self.render("logout.html", username=username)
+            self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
+        else:
+            self.render("logout.html", username="Username Not Found")
 
 
 class ThanksHandler(Handler):
@@ -222,6 +227,7 @@ class FrontHandler(Handler):
 
 
 class Post(db.Model):
+    username = db.StringProperty(required=True)
     subject = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
@@ -232,7 +238,16 @@ class BlogHandler(Handler):
     def render_front(self):
         posts = db.GqlQuery("SELECT * FROM Post ORDER BY "
                             "created DESC LIMIT 10")
-        self.render("blog.html", posts=posts)
+        username = self.request.cookies.get("username")
+        if username:
+            #userposts = []
+            username = username.split('|')[0]
+            #for post in posts:
+            #    if post.username == username:
+            #        userposts += post
+            self.render("blog.html", username=username, posts=posts)
+        else:
+            self.redirect("/signup")
 
     def get(self):
         self.render_front()
@@ -241,19 +256,28 @@ class BlogHandler(Handler):
 class NewPostHandler(Handler):
 
     def render_front(self, subject="", content="", error=""):
-
-        self.render("newpost.html", subject=subject,
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            self.render("newpost.html", username=username, subject=subject,
                     content=content, error=error)
+        else:
+            self.redirect("/signup")
+        
 
     def get(self):
         self.render_front()
 
+        
+
     def post(self):
+        username = self.request.cookies.get("username")
+        username = username.split('|')[0]
         subject = self.request.get("subject")
         content = self.request.get("content")
 
         if content and subject:
-            a = Post(subject=subject, content=content)
+            a = Post(username=username, subject=subject, content=content)
             a.put()
 
             self.redirect("/blog/%s" % a.key().id())
@@ -265,11 +289,16 @@ class NewPostHandler(Handler):
 class PostHandler(Handler):
 
     def get(self, id):
-        key = db.Key.from_path("Post", int(id))
-        post = db.get(key)
-        post.content = post.content
-        self.render("post.html", subject=post.subject,
-                    content=post.content, id=id)
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            post.content = post.content
+            self.render("post.html", username=username, subject=post.subject,
+                        content=post.content, id=id)
+        else:
+            self.redirect("/signup")
 
 
 app = webapp2.WSGIApplication([
