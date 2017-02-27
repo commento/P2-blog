@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{{username}} Editpost</title>
+</head>
+<body>
+	<h1>{{username}}'s Edit Post</h1>
+
+	<form method="post">
+	<label>
+		<div>subject</div>
+		<input type="text" name="subject" value="{{subject}}">
+	</label>
+	<label>
+		<div>content</div>
+		<textarea style="min-height: 300px; min-width: 600px" name="content">
+			{{content}}
+		</textarea>
+	</label>
+	<div class="error">{{error}}</div>
+
+	<input type="submit">
+	</form>
+</body>
+</html>

@@ -5,21 +5,38 @@
 	<title>{{username}} blog</title>
 </head>
 <body>
-	<h1>{{username}}'s blog</h1>
+	<h1>you are logged in as {{username}} : blogs post</h1>
 
 	<hr>
+	<div>
+		<a href="/blog/newpost">New Post</a>
+	</div>
 
+	<hr>
 	{% for post in posts:%}
 	<div>
 		<div>
-			{{post.key().id()}}
+			post id: {{post.key().id()}}
 		</div>
 		<div>
-			{{post.subject}}
+			username: {{post.username}}
+		</div>
+		<div>
+			subject: {{post.subject}}
 		</div>
 		<pre>
-			{{post.content}}
+			content: {{post.content}}
 		</pre>
+
+		{% if post.username == username %}
+		<div>
+			<a href="/blog/edit?id={{post.key().id()}}">edit</a>
+		</div>
+		<div>
+			<a href="/blog/delete?id={{post.key().id()}}">delete</a>
+		</div>
+		<br>
+		{% endif %}
 	</div>
 	{% endfor %}
 </body>

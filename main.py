@@ -240,11 +240,7 @@ class BlogHandler(Handler):
                             "created DESC LIMIT 10")
         username = self.request.cookies.get("username")
         if username:
-            #userposts = []
             username = username.split('|')[0]
-            #for post in posts:
-            #    if post.username == username:
-            #        userposts += post
             self.render("blog.html", username=username, posts=posts)
         else:
             self.redirect("/signup")
@@ -269,7 +265,6 @@ class NewPostHandler(Handler):
         self.render_front()
 
         
-
     def post(self):
         username = self.request.cookies.get("username")
         username = username.split('|')[0]
@@ -277,13 +272,56 @@ class NewPostHandler(Handler):
         content = self.request.get("content")
 
         if content and subject:
-            a = Post(username=username, subject=subject, content=content)
-            a.put()
+            p = Post(username=username, subject=subject, content=content)
+            p.put()
 
-            self.redirect("/blog/%s" % a.key().id())
+            self.redirect("/blog/%s" % p.key().id())
         else:
             error = "we need both a subject and a content"
             self.render_front(subject, content, error)
+
+
+class DeletePostHandler(Handler):
+    
+    def get(self):
+        id = self.request.get('id')
+        post = Post.get_by_id(int(id))
+        post.delete()
+        self.render("deletepost.html", id=id)
+
+
+class EditPostHandler(Handler):
+    
+    def get(self):
+        id = self.request.get('id')
+        post = Post.get_by_id(int(id))
+        self.render("editpost.html", username=post.username, subject=post.subject,
+                     content=post.content)
+
+    def post(self):
+        id = self.request.get('id')
+        username = self.request.cookies.get("username")
+        username = username.split('|')[0]
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+
+        if content and subject:
+            p = Post.get_by_id(int(id))
+            p.subject = subject
+            p.content = content
+            p.put()
+
+            self.redirect("/blog/%s" % p.key().id())
+        else:
+            error = "we need both a subject and a content"
+            self.render("editpost.html", username=post.username, subject=post.subject,
+                     content=post.content, error=error)
+
+
+class FrontPage(Handler):
+
+    def get(self):
+        self.render("main.html")
 
 
 class PostHandler(Handler):
@@ -302,6 +340,7 @@ class PostHandler(Handler):
 
 
 app = webapp2.WSGIApplication([
+    ('/', FrontPage),
     ('/signup', MainPage),
     ('/login', LoginPage),
     ('/logout', LogoutPage),
@@ -309,6 +348,7 @@ app = webapp2.WSGIApplication([
     ('/front', FrontHandler),
     ('/blog', BlogHandler),
     ('/blog/newpost', NewPostHandler),
+    ('/blog/delete', DeletePostHandler),
     ('/blog/([0-9]+)', PostHandler),
-
+    ('/blog/edit', EditPostHandler),
 ], debug=True)
