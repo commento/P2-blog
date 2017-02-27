@@ -137,11 +137,12 @@ class MainPage(Handler):
             elif not bool_email:
                 stringNVE = "Not valid email"
                 self.render("index.html", nve=stringNVE, mail=email)
-        elif checkUsername(username) == False:
+        elif checkUsername(username) is False:
             stringAUU = "Already used username"
             self.render("index.html", nvu=stringAUU, name=username)
         else:
-            u = User(username=username, password=hash_str(password), email=email)
+            u = User(username=username,
+                     password=hash_str(password), email=email)
             u.put()
             cookie_username = make_secure_val(username)
             self.response.headers.add_header('Set-Cookie',
@@ -256,15 +257,13 @@ class NewPostHandler(Handler):
         if username:
             username = username.split('|')[0]
             self.render("newpost.html", username=username, subject=subject,
-                    content=content, error=error)
+                        content=content, error=error)
         else:
             self.redirect("/signup")
-        
 
     def get(self):
         self.render_front()
 
-        
     def post(self):
         username = self.request.cookies.get("username")
         username = username.split('|')[0]
@@ -282,7 +281,7 @@ class NewPostHandler(Handler):
 
 
 class DeletePostHandler(Handler):
-    
+
     def get(self):
         id = self.request.get('id')
         post = Post.get_by_id(int(id))
@@ -291,12 +290,13 @@ class DeletePostHandler(Handler):
 
 
 class EditPostHandler(Handler):
-    
+
     def get(self):
         id = self.request.get('id')
         post = Post.get_by_id(int(id))
-        self.render("editpost.html", username=post.username, subject=post.subject,
-                     content=post.content)
+        self.render("editpost.html",
+                    username=post.username, subject=post.subject,
+                    content=post.content)
 
     def post(self):
         id = self.request.get('id')
@@ -314,8 +314,9 @@ class EditPostHandler(Handler):
             self.redirect("/blog/%s" % p.key().id())
         else:
             error = "we need both a subject and a content"
-            self.render("editpost.html", username=post.username, subject=post.subject,
-                     content=post.content, error=error)
+            self.render("editpost.html",
+                        username=post.username, subject=post.subject,
+                        content=post.content, error=error)
 
 
 class FrontPage(Handler):
