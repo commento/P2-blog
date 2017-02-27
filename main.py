@@ -24,22 +24,27 @@ import re
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
+jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
+                               autoescape=True)
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 PASS_RE = re.compile(r"^.{3,20}$")
 EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
 
+
 def hash_str(s):
     return hashlib.sha256(s).hexdigest()
 
+
 def make_secure_val(s):
     return s + '|' + hash_str(s)
+
 
 def check_secure_val(h):
     v = h.partition('|')
     if hash_str(v[0]) == v[2]:
         return v[0]
+
 
 def apply_rot13(text):
     test = ""
@@ -66,10 +71,12 @@ def valid_email(email):
     else:
         return False
 
+
 class User(db.Model):
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
     email = db.StringProperty()
+
 
 def checkUserPass(username, password):
     users = db.GqlQuery("SELECT * FROM User")
@@ -77,11 +84,13 @@ def checkUserPass(username, password):
         if user.username == username and user.password == password:
             return True
 
+
 def checkUsername(username):
     users = db.GqlQuery("SELECT * FROM User")
     for user in users:
         if user.username == username:
             return False
+
 
 def valid_password(password, verpass):
     if password and PASS_RE.match(password) and password == verpass:
@@ -102,6 +111,7 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
+
 class MainPage(Handler):
 
     def get(self):
@@ -119,18 +129,24 @@ class MainPage(Handler):
 
         if not (bool_username and bool_password and bool_email):
             if not bool_username:
-                self.render("index.html", nvu="Not valid username", name=username)
+                stringNVU = "Not valid username"
+                self.render("index.html", nvu=stringNVU, name=username)
             elif not bool_password:
-                self.render("index.html", nvp="Not valid password")
+                stringNVP = "Not valid password"
+                self.render("index.html", nvp=stringNVP)
             elif not bool_email:
-                self.render("index.html", nve="Not valid email", mail=email)
+                stringNVE = "Not valid email"
+                self.render("index.html", nve=stringNVE, mail=email)
         elif checkUsername(username) == False:
-            self.render("index.html", nvu="Already used username", name=username)
+            stringAUU = "Already used username"
+            self.render("index.html", nvu=stringAUU, name=username)
         else:
             u = User(username=username, password=password, email=email)
             u.put()
             cookie_username = make_secure_val(username)
-            self.response.headers.add_header('Set-Cookie', 'username=%s; Path=/' % str(cookie_username))
+            self.response.headers.add_header('Set-Cookie',
+                                             'username=%s; Path=/'
+                                             % str(cookie_username))
             self.redirect("/welcome")
 
 
@@ -146,10 +162,13 @@ class LoginPage(Handler):
         checkup = checkUserPass(username, password)
 
         if not checkup:
-            self.render("login.html", nvu="Not valid username or Not valid password", name=username)
+            stringNVUP = "Not valid username or Not valid password"
+            self.render("login.html", nvu=stringNVUP, name=username)
         else:
             cookie_username = make_secure_val(username)
-            self.response.headers.add_header('Set-Cookie', 'username=%s; Path=/' % str(cookie_username))
+            self.response.headers.add_header('Set-Cookie',
+                                             'username=%s; Path=/'
+                                             % str(cookie_username))
             self.redirect("/welcome")
 
 
@@ -157,8 +176,8 @@ class LogoutPage(Handler):
 
     def get(self):
         self.response.headers.add_header('Set-Cookie', 'username=; Path=/')
-        self.redirect("/signup")  
-  
+        self.redirect("/signup")
+
 
 class ThanksHandler(Handler):
 
@@ -167,7 +186,7 @@ class ThanksHandler(Handler):
         if check_secure_val(username):
             username = username.split('|')[0]
         else:
-           self.redirect("/signup") 
+            self.redirect("/signup")
 
         self.render("thanks.html", username=username)
 
@@ -211,7 +230,8 @@ class Post(db.Model):
 class BlogHandler(Handler):
 
     def render_front(self):
-        posts = db.GqlQuery("SELECT * FROM Post ORDER BY created DESC LIMIT 10")
+        posts = db.GqlQuery("SELECT * FROM Post ORDER BY "
+                            "created DESC LIMIT 10")
         self.render("blog.html", posts=posts)
 
     def get(self):
@@ -222,7 +242,8 @@ class NewPostHandler(Handler):
 
     def render_front(self, subject="", content="", error=""):
 
-        self.render("newpost.html", subject=subject, content=content, error=error)
+        self.render("newpost.html", subject=subject,
+                    content=content, error=error)
 
     def get(self):
         self.render_front()
@@ -247,7 +268,8 @@ class PostHandler(Handler):
         key = db.Key.from_path("Post", int(id))
         post = db.get(key)
         post.content = post.content
-        self.render("post.html", subject=post.subject, content=post.content, id=id)
+        self.render("post.html", subject=post.subject,
+                    content=post.content, id=id)
 
 
 app = webapp2.WSGIApplication([
