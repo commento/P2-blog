@@ -81,7 +81,7 @@ class User(db.Model):
 def checkUserPass(username, password):
     users = db.GqlQuery("SELECT * FROM User")
     for user in users:
-        if user.username == username and user.password == password:
+        if user.username == username and user.password == hash_str(password):
             return True
 
 
@@ -141,7 +141,7 @@ class MainPage(Handler):
             stringAUU = "Already used username"
             self.render("index.html", nvu=stringAUU, name=username)
         else:
-            u = User(username=username, password=password, email=email)
+            u = User(username=username, password=hash_str(password), email=email)
             u.put()
             cookie_username = make_secure_val(username)
             self.response.headers.add_header('Set-Cookie',
