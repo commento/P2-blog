@@ -10,7 +10,7 @@ template html:
 - logout.html     : /logout
 - blog.html       : /blog
 - newpost.html    : /blog/newpost
-- editpost.html   : /blog/editpost/(post_id)
+- editpost.html   : /blog/edit
 - deletepost.html : /blog/delete
 - post.html       : /blog/(post_id)
 
