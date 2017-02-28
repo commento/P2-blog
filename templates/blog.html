@@ -47,9 +47,24 @@
 			{% if not post.liked_by or find == "true": %}
 			<a href="/blog/like?id={{post.key().id()}}">Like</a>
 			{% endif %}
+			<br>
+			number of likes: {{post.liked_by|length}}
+		</div>
+		<br>
+		<div>
+			COMMENTS:
+			<br>
+			{% for comment in post.comments:%}
+				{{comment}}
+				<br>
+			{% endfor %}
+			<br>
+			<a href="/blog/comment?id={{post.key().id()}}">Add Comment</a>
 		</div>
 		<br>
 	</div>
+	<hr>
 	{% endfor %}
+
 </body>
 </html>

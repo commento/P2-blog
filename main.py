@@ -232,6 +232,7 @@ class Post(db.Model):
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     liked_by = db.ListProperty(str, required=True, default=None)
+    comments = db.ListProperty(str, default=None)
 
 
 class BlogHandler(Handler):
@@ -352,7 +353,6 @@ class PostHandler(Handler):
             username = username.split('|')[0]
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
-            post.content = post.content
             self.render("post.html", username=username, subject=post.subject,
                         content=post.content, id=id)
         else:
@@ -383,6 +383,36 @@ class LikePostHandler(Handler):
         else:
             self.redirect("/signup")
 
+class CommentPostHandler(Handler):
+
+    def get(self):
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            id = self.request.get('id')
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            self.render("comment.html", username=username, subject=post.subject,
+                        content=post.content, id=id)
+        else:
+            self.redirect("/signup")
+
+    def post(self):
+        id = self.request.get('id')
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            comment = self.request.get("comment")
+            id = self.request.get('id')
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            post.comments.append(username + " - " + comment)
+            post.put()
+            self.redirect("/blog")
+        else:
+            self.redirect("/signup")
+
+
 app = webapp2.WSGIApplication([
     ('/', FrontPage),
     ('/signup', MainPage),
@@ -396,4 +426,5 @@ app = webapp2.WSGIApplication([
     ('/blog/([0-9]+)', PostHandler),
     ('/blog/edit', EditPostHandler),
     ('/blog/like', LikePostHandler),
+    ('/blog/comment', CommentPostHandler),
 ], debug=True)
