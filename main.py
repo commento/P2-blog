@@ -98,6 +98,7 @@ def valid_password(password, verpass):
         return False
 
 
+# Page Rendering Handler
 class Handler(webapp2.RequestHandler):
 
     def write(self, *a, **kw):
@@ -111,6 +112,7 @@ class Handler(webapp2.RequestHandler):
         self.write(self.render_str(template, **kw))
 
 
+# Signup Page Handler
 class MainPage(Handler):
 
     def get(self):
@@ -150,6 +152,7 @@ class MainPage(Handler):
             self.redirect("/welcome")
 
 
+# Login Page Handler
 class LoginPage(Handler):
 
     def get(self):
@@ -172,6 +175,7 @@ class LoginPage(Handler):
             self.redirect("/welcome")
 
 
+# Logout Page Handler
 class LogoutPage(Handler):
 
     def get(self):
@@ -184,6 +188,7 @@ class LogoutPage(Handler):
             self.render("logout.html", username="Username Not Found")
 
 
+# Welcome Page Handler
 class ThanksHandler(Handler):
 
     def get(self):
@@ -196,12 +201,14 @@ class ThanksHandler(Handler):
         self.render("thanks.html", username=username)
 
 
+# Ascii Art Database
 class Art(db.Model):
     title = db.StringProperty(required=True)
     art = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
 
 
+# Ascii Art Page Handler
 class FrontHandler(Handler):
 
     def render_front(self, title="", art="", error=""):
@@ -226,6 +233,7 @@ class FrontHandler(Handler):
             self.render_front(title, art, error)
 
 
+# Blog Post Database
 class Post(db.Model):
     username = db.StringProperty(required=True)
     subject = db.StringProperty(required=True)
@@ -235,6 +243,7 @@ class Post(db.Model):
     comments = db.ListProperty(str, default=None)
 
 
+# Main Page Blog Handler
 class BlogHandler(Handler):
 
     def render_front(self):
@@ -252,6 +261,7 @@ class BlogHandler(Handler):
         self.render_front()
 
 
+# New Blog Post Page Handler
 class NewPostHandler(Handler):
 
     def render_front(self, subject="", content="", error=""):
@@ -284,6 +294,7 @@ class NewPostHandler(Handler):
             self.render_front(subject, content, error)
 
 
+# Delete Blog Post Page Handler
 class DeletePostHandler(Handler):
 
     def get(self):
@@ -300,6 +311,7 @@ class DeletePostHandler(Handler):
             self.redirect("/login")
 
 
+# Edit Blog Post Page Handler
 class EditPostHandler(Handler):
 
     def get(self):
@@ -339,12 +351,14 @@ class EditPostHandler(Handler):
             self.redirect("/login")
 
 
+# App Front Page Handler
 class FrontPage(Handler):
 
     def get(self):
         self.render("main.html")
 
 
+# Single Blog Post Page Handler
 class PostHandler(Handler):
 
     def get(self, id):
@@ -359,6 +373,7 @@ class PostHandler(Handler):
             self.redirect("/signup")
 
 
+# Like Feature Handler
 class LikePostHandler(Handler):
 
     def get(self):
@@ -384,6 +399,7 @@ class LikePostHandler(Handler):
             self.redirect("/signup")
 
 
+# Comment Feature Handler
 class CommentPostHandler(Handler):
 
     def get(self):
