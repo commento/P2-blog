@@ -383,6 +383,7 @@ class LikePostHandler(Handler):
         else:
             self.redirect("/signup")
 
+
 class CommentPostHandler(Handler):
 
     def get(self):
@@ -392,7 +393,8 @@ class CommentPostHandler(Handler):
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
-            self.render("comment.html", username=username, subject=post.subject,
+            self.render("comment.html", username=username,
+                        subject=post.subject,
                         content=post.content, id=id)
         else:
             self.redirect("/signup")
