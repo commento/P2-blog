@@ -27,10 +27,6 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-PASS_RE = re.compile(r"^.{3,20}$")
-EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
-
 
 def hash_str(s):
     return hashlib.sha256(s).hexdigest()
@@ -59,6 +55,7 @@ def apply_rot13(text):
 
 
 def valid_username(username):
+    USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
     if not username or not USER_RE.match(username):
         return False
     else:
@@ -66,6 +63,7 @@ def valid_username(username):
 
 
 def valid_email(email):
+    EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
     if email == "" or EMAIL_RE.match(email):
         return True
     else:
@@ -93,6 +91,7 @@ def checkUsername(username):
 
 
 def valid_password(password, verpass):
+    PASS_RE = re.compile(r"^.{3,20}$")
     if password and PASS_RE.match(password) and password == verpass:
         return True
     else:
@@ -232,6 +231,7 @@ class Post(db.Model):
     subject = db.StringProperty(required=True)
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
+    liked_by = db.ListProperty(str, required=True, default=None)
 
 
 class BlogHandler(Handler):
@@ -239,6 +239,7 @@ class BlogHandler(Handler):
     def render_front(self):
         posts = db.GqlQuery("SELECT * FROM Post ORDER BY "
                             "created DESC LIMIT 10")
+
         username = self.request.cookies.get("username")
         if username:
             username = username.split('|')[0]
@@ -269,9 +270,11 @@ class NewPostHandler(Handler):
         username = username.split('|')[0]
         subject = self.request.get("subject")
         content = self.request.get("content")
+        liked_by = [username]
 
         if content and subject:
-            p = Post(username=username, subject=subject, content=content)
+            p = Post(username=username, subject=subject,
+                     content=content, liked_by=liked_by)
             p.put()
 
             self.redirect("/blog/%s" % p.key().id())
@@ -283,40 +286,56 @@ class NewPostHandler(Handler):
 class DeletePostHandler(Handler):
 
     def get(self):
-        id = self.request.get('id')
-        post = Post.get_by_id(int(id))
-        post.delete()
-        self.render("deletepost.html", id=id)
+        username = self.request.cookies.get("username")
+        if username:
+            id = self.request.get('id')
+            post = Post.get_by_id(int(id))
+            if not post:
+                self.error(404)
+                return
+            post.delete()
+            self.render("deletepost.html", id=id)
+        else:
+            self.redirect("/login")
 
 
 class EditPostHandler(Handler):
 
     def get(self):
-        id = self.request.get('id')
-        post = Post.get_by_id(int(id))
-        self.render("editpost.html",
-                    username=post.username, subject=post.subject,
-                    content=post.content)
+        username = self.request.cookies.get("username")
+        if username:
+            id = self.request.get('id')
+            post = Post.get_by_id(int(id))
+            self.render("editpost.html",
+                        username=post.username, subject=post.subject,
+                        content=post.content)
+        else:
+            self.redirect("/login")
 
     def post(self):
         id = self.request.get('id')
         username = self.request.cookies.get("username")
-        username = username.split('|')[0]
-        subject = self.request.get("subject")
-        content = self.request.get("content")
-
-        if content and subject:
+        if username:
+            username = username.split('|')[0]
             p = Post.get_by_id(int(id))
-            p.subject = subject
-            p.content = content
-            p.put()
+            if p.username != username:
+                self.redirect("/blog")
+            subject = self.request.get("subject")
+            content = self.request.get("content")
 
-            self.redirect("/blog/%s" % p.key().id())
+            if content and subject:
+                p.subject = subject
+                p.content = content
+                p.put()
+
+                self.redirect("/blog/%s" % p.key().id())
+            else:
+                error = "we need both a subject and a content"
+                self.render("editpost.html",
+                            username=post.username, subject=post.subject,
+                            content=post.content, error=error)
         else:
-            error = "we need both a subject and a content"
-            self.render("editpost.html",
-                        username=post.username, subject=post.subject,
-                        content=post.content, error=error)
+            self.redirect("/login")
 
 
 class FrontPage(Handler):
@@ -340,6 +359,30 @@ class PostHandler(Handler):
             self.redirect("/signup")
 
 
+class LikePostHandler(Handler):
+
+    def get(self):
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            id = self.request.get('id')
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            likes = post.liked_by
+            find = False
+            for like in likes:
+                if like == username:
+                    # unlike - remove username
+                    post.liked_by.remove(username)
+                    find = True
+            if find is False:
+                # like - add username
+                post.liked_by.append(username)
+            post.put()
+            self.redirect("/blog")
+        else:
+            self.redirect("/signup")
+
 app = webapp2.WSGIApplication([
     ('/', FrontPage),
     ('/signup', MainPage),
@@ -352,4 +395,5 @@ app = webapp2.WSGIApplication([
     ('/blog/delete', DeletePostHandler),
     ('/blog/([0-9]+)', PostHandler),
     ('/blog/edit', EditPostHandler),
+    ('/blog/like', LikePostHandler),
 ], debug=True)

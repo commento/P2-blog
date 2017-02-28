@@ -37,6 +37,19 @@
 		</div>
 		<br>
 		{% endif %}
+		<div>
+			{% for post_liked in post.liked_by:%}
+			{% if post_liked == username: %}
+			<a href="/blog/like?id={{post.key().id()}}">Unlike</a>
+			{% else: %}
+			<a href="/blog/like?id={{post.key().id()}}">Like</a>
+			{% endif %}
+			{% endfor %}
+			{% if not post.liked_by: %}
+			<a href="/blog/like?id={{post.key().id()}}">Like</a>
+			{% endif %}
+		</div>
+		<br>
 	</div>
 	{% endfor %}
 </body>
