@@ -67,8 +67,7 @@
 			<a href="/blog/editcomment?id={{post.key().id()}}&commented={{comment}}">Edit Comment</a>
 			<a href="/blog/deletecomment?id={{post.key().id()}}&commented={{comment}}">Delete Comment</a>
 			<br>
-			{% endif %}
-			{% if post.username == username: %}
+			{% elif post.username == username: %}
 			<a href="/blog/deletecomment?id={{post.key().id()}}&commented={{comment}}">Delete Comment</a>
 			<br>
 			{% endif %}
