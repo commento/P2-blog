@@ -374,7 +374,6 @@ class EditCommentHandler(Handler):
             username = username.split('|')[0]
             id = self.request.get('id')
             comment = self.request.get('commented')
-            print(comment)
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
             if not post:
@@ -382,11 +381,9 @@ class EditCommentHandler(Handler):
                 return self.redirect('not_found.html')
             commentToEdit = ""   
             for com in post.comments:
-                print(com)
                 if com == comment:
                     commentToEdit = comment.split('-')[1]
             if commentToEdit == "":
-                print("ciao")
                 return self.redirect("/blog")
             self.render("comment.html", username=username,
                         subject=post.subject,
@@ -432,7 +429,7 @@ class DeleteCommentHandler(Handler):
             else:
                 self.redirect("/signup")
             id = self.request.get('id')
-            comment = self.request.get('commented')
+            commented = self.request.get('commented')
             post = Post.get_by_id(int(id))
             if not post:
                 self.error(404)
