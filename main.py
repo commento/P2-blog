@@ -436,7 +436,8 @@ class DeleteCommentHandler(Handler):
                 return self.redirect('not_found.html')
             for idx, comment in enumerate(post.comments):
                 if commented == comment and (username == comment.split('-')[0] or username == post.username):
-                    post.comments[idx].delete()
+                    del post.comments[idx]
+                    post.put()
                 else:
                     comment = "You cannot delete this comment"
             self.render("deletecomment.html", comment=comment)
