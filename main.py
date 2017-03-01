@@ -249,28 +249,30 @@ class NewPostHandler(Handler):
             self.render("newpost.html", username=username, subject=subject,
                         content=content, error=error)
         else:
-            self.redirect("/signup")
+            self.redirect("/login")
 
     def get(self):
         self.render_front()
 
     def post(self):
         username = self.request.cookies.get("username")
-        username = username.split('|')[0]
-        subject = self.request.get("subject")
-        content = self.request.get("content")
-        liked_by = [username]
+        if username:
+            username = username.split('|')[0]
+            subject = self.request.get("subject")
+            content = self.request.get("content")
+            liked_by = [username]
 
-        if content and subject:
-            p = Post(username=username, subject=subject,
-                     content=content, liked_by=liked_by)
-            p.put()
+            if content and subject:
+                p = Post(username=username, subject=subject,
+                         content=content, liked_by=liked_by)
+                p.put()
 
-            self.redirect("/blog/%s" % p.key().id())
+                self.redirect("/blog/%s" % p.key().id())
+            else:
+                error = "we need both a subject and a content"
+                self.render_front(subject, content, error)
         else:
-            error = "we need both a subject and a content"
-            self.render_front(subject, content, error)
-
+            self.redirect("/login")
 
 # Delete Blog Post Page Handler
 class DeletePostHandler(Handler):
@@ -278,12 +280,20 @@ class DeletePostHandler(Handler):
     def get(self):
         username = self.request.cookies.get("username")
         if username:
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
             id = self.request.get('id')
             post = Post.get_by_id(int(id))
             if not post:
                 self.error(404)
-                return
-            post.delete()
+                return self.redirect('not_found.html')
+            if username == post.username:
+                post.delete()
+            else:
+                id = "You cannot delete this post"
             self.render("deletepost.html", id=id)
         else:
             self.redirect("/login")
@@ -307,10 +317,14 @@ class EditPostHandler(Handler):
         id = self.request.get('id')
         username = self.request.cookies.get("username")
         if username:
-            username = username.split('|')[0]
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
             p = Post.get_by_id(int(id))
             if p.username != username:
-                self.redirect("/blog")
+                return self.redirect("/blog")
             subject = self.request.get("subject")
             content = self.request.get("content")
 
@@ -348,7 +362,7 @@ class PostHandler(Handler):
             self.render("post.html", username=username, subject=post.subject,
                         content=post.content, id=id)
         else:
-            self.redirect("/signup")
+            self.redirect("/login")
 
 
 # Like Feature Handler
@@ -357,7 +371,11 @@ class LikePostHandler(Handler):
     def get(self):
         username = self.request.cookies.get("username")
         if username:
-            username = username.split('|')[0]
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
@@ -374,7 +392,7 @@ class LikePostHandler(Handler):
             post.put()
             self.redirect("/blog")
         else:
-            self.redirect("/signup")
+            self.redirect("/login")
 
 
 # Comment Feature Handler
@@ -391,13 +409,17 @@ class CommentPostHandler(Handler):
                         subject=post.subject,
                         content=post.content, id=id)
         else:
-            self.redirect("/signup")
+            self.redirect("/login")
 
     def post(self):
         id = self.request.get('id')
         username = self.request.cookies.get("username")
         if username:
-            username = username.split('|')[0]
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
             comment = self.request.get("comment")
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
@@ -406,7 +428,7 @@ class CommentPostHandler(Handler):
             post.put()
             self.redirect("/blog")
         else:
-            self.redirect("/signup")
+            self.redirect("/login")
 
 
 app = webapp2.WSGIApplication([
