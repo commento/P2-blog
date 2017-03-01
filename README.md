@@ -15,7 +15,8 @@ Instruction:
 
 files:
 
-- main.py
+- main.py   : Page Handlers
+- models.py : Databases Handlers and User Authentication/Authorization methods
 
 template html:
 - index.html      : /signup

@@ -40,7 +40,7 @@
 			<a href="/blog/delete?id={{post.key().id()}}">delete</a>
 		</div>
 		<br>
-		{% endif %}
+		{% else %}
 		<div>
 			{% for post_liked in post.liked_by:%}
 			{% if post_liked == username: %}
@@ -55,6 +55,7 @@
 			number of likes: {{post.liked_by|length}}
 		</div>
 		<br>
+		{% endif %}
 		<div>
 			COMMENTS:
 			<br>
