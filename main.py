@@ -305,6 +305,8 @@ class LikePostHandler(Handler):
             if not post:
                 self.error(404)
                 return self.redirect('not_found.html')
+            if post.username == username:
+                return self.redirect('/blog')
             likes = post.liked_by
             find = False
             for like in likes:
@@ -363,6 +365,88 @@ class CommentPostHandler(Handler):
             self.redirect("/login")
 
 
+# Edit Comment Feature Handler
+class EditCommentHandler(Handler):
+
+    def get(self):
+        username = self.request.cookies.get("username")
+        if username:
+            username = username.split('|')[0]
+            id = self.request.get('id')
+            comment = self.request.get('commented')
+            print(comment)
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
+            commentToEdit = ""   
+            for com in post.comments:
+                print(com)
+                if com == comment:
+                    commentToEdit = comment.split('-')[1]
+            if commentToEdit == "":
+                print("ciao")
+                return self.redirect("/blog")
+            self.render("comment.html", username=username,
+                        subject=post.subject,
+                        content=post.content, comment=commentToEdit, id=id)
+        else:
+            self.redirect("/login")
+
+    def post(self):
+        id = self.request.get('id')
+        username = self.request.cookies.get("username")
+        if username:
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
+            comment = self.request.get("comment")
+            commented = self.request.get("commented")
+            id = self.request.get('id')
+            key = db.Key.from_path("Post", int(id))
+            post = db.get(key)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
+            for idx, com in enumerate(post.comments):
+                if commented == com:
+                   post.comments[idx] = username + "-" + comment
+            post.put()
+            self.redirect("/blog")
+        else:
+            self.redirect("/login")
+
+
+# Delete Comment Feature Handler
+class DeleteCommentHandler(Handler):
+
+    def get(self):
+        username = self.request.cookies.get("username")
+        if username:
+            # check username and related hash
+            if check_secure_val(username):
+                username = username.split('|')[0]
+            else:
+                self.redirect("/signup")
+            id = self.request.get('id')
+            comment = self.request.get('commented')
+            post = Post.get_by_id(int(id))
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
+            for idx, comment in enumerate(post.comments):
+                if commented == comment and (username == comment.split('-')[0] or username == post.username):
+                    post.comments[idx].delete()
+                else:
+                    comment = "You cannot delete this comment"
+            self.render("deletecomment.html", comment=comment)
+        else:
+            self.redirect("/login")
+
+
 app = webapp2.WSGIApplication([
     ('/', FrontPage),
     ('/signup', MainPage),
@@ -377,6 +461,6 @@ app = webapp2.WSGIApplication([
     ('/blog/edit', EditPostHandler),
     ('/blog/like', LikePostHandler),
     ('/blog/comment', CommentPostHandler),
-    ('/blog/editcomment', EditCommentPostHandler),
-    ('/blog/deletecomment', DeleteCommentPostHandler),
+    ('/blog/editcomment', EditCommentHandler),
+    ('/blog/deletecomment', DeleteCommentHandler),
 ], debug=True)
