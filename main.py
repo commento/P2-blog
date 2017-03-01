@@ -18,6 +18,7 @@ import jinja2
 import webapp2
 import string
 import hashlib
+import models
 
 import re
 
@@ -68,12 +69,6 @@ def valid_email(email):
         return True
     else:
         return False
-
-
-class User(db.Model):
-    username = db.StringProperty(required=True)
-    password = db.StringProperty(required=True)
-    email = db.StringProperty()
 
 
 def checkUserPass(username, password):
@@ -201,13 +196,6 @@ class ThanksHandler(Handler):
         self.render("thanks.html", username=username)
 
 
-# Ascii Art Database
-class Art(db.Model):
-    title = db.StringProperty(required=True)
-    art = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-
-
 # Ascii Art Page Handler
 class FrontHandler(Handler):
 
@@ -231,16 +219,6 @@ class FrontHandler(Handler):
         else:
             error = "we need both a title and an artwork"
             self.render_front(title, art, error)
-
-
-# Blog Post Database
-class Post(db.Model):
-    username = db.StringProperty(required=True)
-    subject = db.StringProperty(required=True)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    liked_by = db.ListProperty(str, required=True, default=None)
-    comments = db.ListProperty(str, default=None)
 
 
 # Main Page Blog Handler
