@@ -25,6 +25,7 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
                                autoescape=True)
 
+
 def hash_str(s):
     return hashlib.sha256(s).hexdigest()
 
@@ -101,6 +102,8 @@ class Handler(webapp2.RequestHandler):
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
+
+
 class User(db.Model):
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)

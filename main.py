@@ -188,6 +188,7 @@ class NewPostHandler(Handler):
         else:
             self.redirect("/login")
 
+
 # Delete Blog Post Page Handler
 class DeletePostHandler(Handler):
 
@@ -379,7 +380,7 @@ class EditCommentHandler(Handler):
             if not post:
                 self.error(404)
                 return self.redirect('not_found.html')
-            commentToEdit = ""   
+            commentToEdit = ""
             for com in post.comments:
                 if com == comment:
                     commentToEdit = comment.split('-')[1]
@@ -410,7 +411,7 @@ class EditCommentHandler(Handler):
                 return self.redirect('not_found.html')
             for idx, com in enumerate(post.comments):
                 if commented == com:
-                   post.comments[idx] = username + "-" + comment
+                    post.comments[idx] = username + "-" + comment
             post.put()
             self.redirect("/blog")
         else:
@@ -435,7 +436,9 @@ class DeleteCommentHandler(Handler):
                 self.error(404)
                 return self.redirect('not_found.html')
             for idx, comment in enumerate(post.comments):
-                if commented == comment and (username == comment.split('-')[0] or username == post.username):
+                if commented == comment and (username ==
+                                             comment.split('-')[0] or
+                                             username == post.username):
                     del post.comments[idx]
                     post.put()
                 else:
