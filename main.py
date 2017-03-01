@@ -221,6 +221,9 @@ class EditPostHandler(Handler):
         if username:
             id = self.request.get('id')
             post = Post.get_by_id(int(id))
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
             self.render("editpost.html",
                         username=post.username, subject=post.subject,
                         content=post.content)
@@ -237,6 +240,9 @@ class EditPostHandler(Handler):
             else:
                 self.redirect("/signup")
             p = Post.get_by_id(int(id))
+            if not p:
+                self.error(404)
+                return self.redirect('not_found.html')
             if p.username != username:
                 return self.redirect("/blog")
             subject = self.request.get("subject")
@@ -273,6 +279,9 @@ class PostHandler(Handler):
             username = username.split('|')[0]
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
             self.render("post.html", username=username, subject=post.subject,
                         content=post.content, id=id)
         else:
@@ -293,6 +302,9 @@ class LikePostHandler(Handler):
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
             likes = post.liked_by
             find = False
             for like in likes:
@@ -319,6 +331,9 @@ class CommentPostHandler(Handler):
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
             self.render("comment.html", username=username,
                         subject=post.subject,
                         content=post.content, id=id)
@@ -338,7 +353,10 @@ class CommentPostHandler(Handler):
             id = self.request.get('id')
             key = db.Key.from_path("Post", int(id))
             post = db.get(key)
-            post.comments.append(username + " - " + comment)
+            if not post:
+                self.error(404)
+                return self.redirect('not_found.html')
+            post.comments.append(username + "-" + comment)
             post.put()
             self.redirect("/blog")
         else:
@@ -359,4 +377,6 @@ app = webapp2.WSGIApplication([
     ('/blog/edit', EditPostHandler),
     ('/blog/like', LikePostHandler),
     ('/blog/comment', CommentPostHandler),
+    ('/blog/editcomment', EditCommentPostHandler),
+    ('/blog/deletecomment', DeleteCommentPostHandler),
 ], debug=True)
