@@ -19,6 +19,8 @@ import webapp2
 import string
 import hashlib
 
+import re
+
 from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
